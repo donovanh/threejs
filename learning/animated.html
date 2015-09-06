@@ -1,0 +1,88 @@
+<html>
+  <head>
+    <title>Multiple frames</title>
+    <style>
+      body { margin: 0; }
+      canvas { width: 100%; height: 100% }
+    </style>
+  </head>
+  <body>
+    <script src="js/three.min.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/frames.js"></script>
+    <script>
+      /*
+        "frameData" defined in frames.js as:
+        var frameData = [
+          [
+            {
+              x: 0.2159058,
+              y: -0.5400928,
+              z: 3.537689
+            },
+            ... for all points in the frame
+          ],
+          [
+          ... for all frames in the animation
+
+        ];
+
+      */
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera( 45, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+      controls = new THREE.OrbitControls ( camera );
+      controls.addEventListener('change', render);
+
+      var renderer = new THREE.WebGLRenderer();
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
+
+      // Loop through the frameData array and add the points
+      firstFrame = frameData[0];
+      firstFrame.forEach(function(point, index, arr) {
+        var geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
+        var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+        var cube = new THREE.Mesh( geometry, material );
+        cube.position.x = point.x * 10;
+        cube.position.y = point.y * 10;
+        cube.position.z = point.z * 1;
+        cube.name = "cube" + index;
+        scene.add( cube );
+      });
+
+      // Loop through all the frames and update the coordinates of each point
+      currentFrame = 1;
+      setInterval(function() { updateFrame() }, 500);
+
+
+      var updateFrame = function() {
+
+        console.log("Update called for frame: ", currentFrame, frameData.length);
+        var currentFrameData = frameData[currentFrame];
+         currentFrameData.forEach(function(point, index, arr) {
+          var cube = scene.getObjectByName( "cube" + index );
+          cube.position.x = point.x * 10;
+          cube.position.y = point.y * 10;
+          cube.position.z = point.z * 1;
+        });
+        if (currentFrame == frameData.length - 1) {
+          currentFrame = 0;
+        } else {
+          currentFrame ++;
+        }
+      }
+
+      camera.position.x = 2;
+      camera.position.y = -4;
+      camera.position.z = 30;
+
+      var render = function () {
+        requestAnimationFrame( render );
+        renderer.render(scene, camera);
+      };
+
+      render();
+    </script>
+  </body>
+</html>
