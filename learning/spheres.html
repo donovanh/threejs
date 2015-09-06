@@ -33,20 +33,19 @@ var example = (function() {
       envMap,
       box;
 
-  var HEIGHT = 400,
-      WIDTH = 600;
+  var HEIGHT = 600,
+      WIDTH = 800;
 
   // Set up mapping images for the scene
   function loadCubeMap() {
-  // Define the urls for the cube map textures
-  var envMapURLs = [
-    'images/cage.jpg',      // left
-    'images/cage.jpg',      // right
-    'images/cage.jpg',      // top
-    'images/cage.jpg',      // bottom
-    'images/cage.jpg',      // front
-    'images/cage.jpg'       // back
-  ];
+    var envMapURLs = [
+      'images/side.jpg',      // left
+      'images/side.jpg',      // right
+      'images/top.jpg',      // top
+      'images/grass.jpg',      // bottom
+      'images/side.jpg',      // front
+      'images/side.jpg'       // back
+    ];
 
     // Load the textures into a cube map
     envMap = THREE.ImageUtils.loadTextureCube(envMapURLs);
@@ -57,6 +56,9 @@ var example = (function() {
     // Container
     renderer.setSize(WIDTH, HEIGHT);
     renderer.shadowMapEnabled = true;
+    renderer.setClearColor(0x6baaff, 1);
+
+    loadCubeMap();
 
     document.getElementById("webgl-container").appendChild(renderer.domElement);
 
@@ -65,8 +67,9 @@ var example = (function() {
     for (var i = 0; i < number_of_balls; i++) {
       var metalMaterial = new THREE.MeshPhongMaterial({
         envMap: envMap,
-        reflectivity: .8,
-        color : 0xffffff
+        reflectivity: 1,
+        color : 0xffffff,
+        shininess: 100
       });
       var ball = new THREE.Mesh(
         new THREE.SphereGeometry(10,20,20),
@@ -80,40 +83,43 @@ var example = (function() {
     }
 
     // Floor
-    var geometry = new THREE.PlaneBufferGeometry( 800, 400, 1, 1 );
-    var material = new THREE.MeshPhongMaterial( {
-      color: 0xeeeeee} );
+    var geometry = new THREE.PlaneBufferGeometry( 1400, 1400, 1, 1 );
+
+    //var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('images/grass.jpg') } );
+    var grassTexture = THREE.ImageUtils.loadTexture( 'images/grass.jpg' );
+    grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+    grassTexture.repeat.set( 15, 15 );
+    var material = new THREE.MeshBasicMaterial( { map: grassTexture } );
+
     var floor = new THREE.Mesh( geometry, material );
     floor.receiveShadow = true;
     floor.material.side = THREE.DoubleSide;
     floor.position.z = -120;
-    floor.position.x = -180;
+    floor.position.x = -100;
     floor.rotation.x = 90 * Math.PI / 180;
-    floor.position.y = -15;
+    floor.position.y = -30;
     scene.add( floor );
 
     // Lights
     var spotLight = new THREE.SpotLight( 0xffffff );
     spotLight.position.set( 100, 1000, 100 );
     spotLight.castShadow = true;
-    //spotLight.shadowMapWidth = 2048;
-    //spotLight.shadowMapHeight = 2048;
-    //spotLight.shadowCameraNear = 500;
-    // spotLight.shadowCameraFar = 4000;
-    // spotLight.shadowCameraFov = 30;
+    spotLight.shadowMapWidth = 2048;
+    spotLight.shadowMapHeight = 2048;
+    spotLight.shadowCameraNear = 500;
+    spotLight.shadowCameraFar = 4000;
+    spotLight.shadowCameraFov = 30;
     scene.add( spotLight );
 
-    var underLight = new THREE.SpotLight( 0xffffff );
-    underLight.intensity = 0.6;
-    underLight.position.set( -100, -1000, -100 );
-    scene.add( underLight );
+    var ambientLight = new THREE.AmbientLight(0x555555);
+    scene.add( ambientLight );
 
     // Cameras
     camera = new THREE.PerspectiveCamera(
       35,
       WIDTH / HEIGHT,
       0.1,
-      5000
+      1000
     );
 
     camera.position.z = 80;
@@ -123,9 +129,12 @@ var example = (function() {
     scene.add(camera);
 
     // Controls
-    // controls = new THREE.OrbitControls( camera );
-    // controls.damping = 0.2;
-    // controls.addEventListener( 'change', render );
+    controls = new THREE.OrbitControls( camera );
+    controls.damping = 0.5;
+    controls.maxPolarAngle = Math.PI/2;
+    controls.minDistance = 50;
+    controls.maxDistance = 300;
+    controls.addEventListener( 'change', render );
 
     // Stats
     stats = new Stats();
@@ -137,6 +146,7 @@ var example = (function() {
 
     // Dat.gui
 
+
     // Action
     render();
 
@@ -147,8 +157,33 @@ var example = (function() {
       renderer.render(scene, camera);
     stats.end();
     requestAnimationFrame(render);
-    //controls.update();
   }
+
+  var fps = 30;
+  var now;
+  var then = Date.now();
+  var interval = 1000/fps;
+  var delta;
+
+  function render() {
+
+    requestAnimationFrame(render);
+
+    now = Date.now();
+    delta = now - then;
+
+    if (delta > interval) {
+      // update time stuffs
+      // http://codetheory.in/controlling-the-frame-rate-with-requestanimationframe/
+
+      then = now - (delta % interval);
+
+      stats.begin();
+      renderer.render(scene, camera);
+      stats.end();
+    }
+  }
+
 
   window.onload = initScene;
 
