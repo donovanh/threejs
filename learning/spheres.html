@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Spheres</title>
+    <style>
+    body {
+      margin: 0;
+    }
+    .container {
+
+    }
+    </style>
+  </head>
+
+  <body>
+    <div id="webgl-container" class="container"></div>
+
+    <script src="js/three.min.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/stats.min.js"></script>
+<script>
+
+var example = (function() {
+
+  "use strict";
+
+  var scene = new THREE.Scene(),
+      renderer = window.WebGLRenderingContext ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer(),
+      camera,
+      stats,
+      controls,
+      envMap,
+      box;
+
+  var HEIGHT = 400,
+      WIDTH = 600;
+
+  // Set up mapping images for the scene
+  function loadCubeMap() {
+  // Define the urls for the cube map textures
+  var envMapURLs = [
+    'images/cage.jpg',      // left
+    'images/cage.jpg',      // right
+    'images/cage.jpg',      // top
+    'images/cage.jpg',      // bottom
+    'images/cage.jpg',      // front
+    'images/cage.jpg'       // back
+  ];
+
+    // Load the textures into a cube map
+    envMap = THREE.ImageUtils.loadTextureCube(envMapURLs);
+  }
+
+  function initScene() {
+
+    // Container
+    renderer.setSize(WIDTH, HEIGHT);
+    renderer.shadowMapEnabled = true;
+
+    document.getElementById("webgl-container").appendChild(renderer.domElement);
+
+    // Actors
+    var number_of_balls = 5;
+    for (var i = 0; i < number_of_balls; i++) {
+      var metalMaterial = new THREE.MeshPhongMaterial({
+        envMap: envMap,
+        reflectivity: .8,
+        color : 0xffffff
+      });
+      var ball = new THREE.Mesh(
+        new THREE.SphereGeometry(10,20,20),
+        metalMaterial
+        //new THREE.MeshBasicMaterial({wireframe: true})
+      );
+      ball.position.x = (-50) + 20 * i;
+      ball.name = "ball" + i;
+      ball.castShadow = true;
+      scene.add(ball);
+    }
+
+    // Floor
+    var geometry = new THREE.PlaneBufferGeometry( 800, 400, 1, 1 );
+    var material = new THREE.MeshPhongMaterial( {
+      color: 0xeeeeee} );
+    var floor = new THREE.Mesh( geometry, material );
+    floor.receiveShadow = true;
+    floor.material.side = THREE.DoubleSide;
+    floor.position.z = -120;
+    floor.position.x = -180;
+    floor.rotation.x = 90 * Math.PI / 180;
+    floor.position.y = -15;
+    scene.add( floor );
+
+    // Lights
+    var spotLight = new THREE.SpotLight( 0xffffff );
+    spotLight.position.set( 100, 1000, 100 );
+    spotLight.castShadow = true;
+    //spotLight.shadowMapWidth = 2048;
+    //spotLight.shadowMapHeight = 2048;
+    //spotLight.shadowCameraNear = 500;
+    // spotLight.shadowCameraFar = 4000;
+    // spotLight.shadowCameraFov = 30;
+    scene.add( spotLight );
+
+    var underLight = new THREE.SpotLight( 0xffffff );
+    underLight.intensity = 0.6;
+    underLight.position.set( -100, -1000, -100 );
+    scene.add( underLight );
+
+    // Cameras
+    camera = new THREE.PerspectiveCamera(
+      35,
+      WIDTH / HEIGHT,
+      0.1,
+      5000
+    );
+
+    camera.position.z = 80;
+    camera.position.x = 110;
+    camera.position.y = 80;
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    scene.add(camera);
+
+    // Controls
+    // controls = new THREE.OrbitControls( camera );
+    // controls.damping = 0.2;
+    // controls.addEventListener( 'change', render );
+
+    // Stats
+    stats = new Stats();
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.top = '0px';
+    stats.domElement.style.zIndex = 100;
+    document.body.appendChild( stats.domElement );
+
+
+    // Dat.gui
+
+    // Action
+    render();
+
+  }
+
+  function render() {
+    stats.begin();
+      renderer.render(scene, camera);
+    stats.end();
+    requestAnimationFrame(render);
+    //controls.update();
+  }
+
+  window.onload = initScene;
+
+  return {
+    scene: scene
+  }
+
+})();
+
+</script>
+  </body>
+
+</html>
